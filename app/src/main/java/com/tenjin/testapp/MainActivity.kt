@@ -48,10 +48,11 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TenjinTestApp(modifier: Modifier = Modifier) {
-    var username by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf<String?>(null) }
+    var newUsername by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        username = TenjinSDK.getUsername() ?: ""
+        username = TenjinSDK.getUsername()
     }
 
     Column(
@@ -61,25 +62,30 @@ fun TenjinTestApp(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Username") }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            if (username.isNotEmpty()) {
-                TenjinSDK.setUsername(username)
+        if (username != null) {
+            Text("Current Username: $username")
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                TenjinSDK.removeUsername()
+                username = null
+            }) {
+                Text("Remove Username")
             }
-        }) {
-            Text("Set Username")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = {
-            TenjinSDK.removeUsername()
-            username = ""
-        }) {
-            Text("Remove Username")
+        } else {
+            OutlinedTextField(
+                value = newUsername,
+                onValueChange = { newUsername = it },
+                label = { Text("Username") }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                if (newUsername.isNotEmpty()) {
+                    TenjinSDK.setUsername(newUsername)
+                    username = newUsername
+                }
+            }) {
+                Text("Set Username")
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { TenjinSDK.sendEvent("event_a_clicked") }) {

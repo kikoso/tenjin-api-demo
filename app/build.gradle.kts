@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -5,6 +6,12 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.compose.compiler)
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -20,7 +27,11 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "TENJIN_API_KEY", "\"${System.getProperty("TENJIN_API_KEY")}\"")
+        val tenjinApiKey = localProperties.getProperty("TENJIN_API_KEY")
+        if (tenjinApiKey.isNullOrEmpty()) {
+            throw GradleException("TENJIN_API_KEY must be set in local.properties")
+        }
+        buildConfigField("String", "TENJIN_API_KEY", "\"$tenjinApiKey\"")
     }
 
     buildTypes {
