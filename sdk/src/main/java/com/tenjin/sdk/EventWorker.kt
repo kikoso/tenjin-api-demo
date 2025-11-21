@@ -21,7 +21,7 @@ class EventWorker(
     )
 
     override suspend fun doWork(): Result {
-        val events = eventDao.getAllEvents()
+        val events = eventDao.getEvents()
         if (events.isEmpty()) {
             return Result.success()
         }

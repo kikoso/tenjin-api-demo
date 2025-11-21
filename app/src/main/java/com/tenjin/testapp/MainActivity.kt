@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -17,6 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +53,7 @@ class MainActivity : ComponentActivity() {
 fun TenjinTestApp(modifier: Modifier = Modifier) {
     var username by remember { mutableStateOf<String?>(null) }
     var newUsername by remember { mutableStateOf("") }
+    val events by TenjinSDK.getEvents().collectAsState(initial = emptyList())
 
     LaunchedEffect(Unit) {
         username = TenjinSDK.getUsername()
@@ -94,6 +98,12 @@ fun TenjinTestApp(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { TenjinSDK.sendEvent("event_b_clicked") }) {
             Text("Send Event B")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyColumn {
+            items( events) { event ->
+                Text("Sending event ${event.eventName}...")
+            }
         }
     }
 }

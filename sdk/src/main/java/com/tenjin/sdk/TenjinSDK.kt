@@ -11,6 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.core.content.edit
 
+import kotlinx.coroutines.flow.Flow
+
 object TenjinSDK {
 
     private lateinit var appContext: Context
@@ -45,6 +47,10 @@ object TenjinSDK {
         coroutineScope.launch {
             userDao.removeUsername()
         }
+    }
+
+    fun getEvents(): Flow<List<Event>> {
+        return eventDao.getAllEvents()
     }
 
     fun sendEvent(eventName: String) {
