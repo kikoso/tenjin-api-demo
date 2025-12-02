@@ -10,8 +10,8 @@ To get started with this project, you'll need to clone the repository and open i
 
 Before you can build and run the app, you need to provide your Tenjin API key.
 
-1.  Create a file named `local.properties` in the root of the project.
-2.  Add your Tenjin API key to the `local.properties` file in the following format:
+1.  Create a file named `secrets.properties` in the root of the project.
+2.  Add your Tenjin API key to the `secrets.properties` file in the following format:
 
 ```
 TENJIN_API_KEY="YOUR_TENJIN_API_KEY"
