@@ -23,7 +23,7 @@ robolectric = "4.16"
 testCore = "1.7.0"
 workTesting = "2.11.0"
 coroutinesTest = "1.10.2"
-ksp = "2.2.21"
+ksp = "2.2.20-2.0.3"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -57,5 +57,4 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kapt" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" } # Added for KSP
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

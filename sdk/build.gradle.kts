@@ -5,7 +5,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.kapt")
+    id("com.google.devtools.ksp") version libs.versions.ksp.get() // Apply the KSP plugin with version from libs.versions.toml
 }
 
 android {
@@ -69,7 +69,7 @@ dependencies {
     // Room for database
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
 
     // WorkManager for background tasks
     implementation(libs.androidx.work.runtime.ktx)
