@@ -8,13 +8,13 @@ import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class EventWorker(
+class BatchEventWorker(
     appContext: Context,
-    workerParams: WorkerParameters
+    workerParams: WorkerParameters,
+    private val eventDao: EventDao,
+    private val userDao: UserDao,
+    private val tenjinApi: TenjinApi
 ) : CoroutineWorker(appContext, workerParams) {
-    private val userDao = AppDatabase.getDatabase(applicationContext).userDao()
-    private val eventDao = AppDatabase.getDatabase(applicationContext).eventDao()
-    private val tenjinApi = RetrofitClient.instance
     private val sharedPreferences: SharedPreferences = applicationContext.getSharedPreferences(
         "tenjin_sdk_prefs",
         Context.MODE_PRIVATE
@@ -23,25 +23,30 @@ class EventWorker(
     override suspend fun doWork(): Result {
         val events = eventDao.getEvents()
         if (events.isEmpty()) {
+            Logger.d("BatchEventWorker", "No events to send.")
             return Result.success()
         }
 
+        Logger.d("BatchEventWorker", "Attempting to send ${events.size} events individually.")
+
         val advertisingId = getAdvertisingId()
         if (advertisingId == null) {
-            // We can't send events without an advertising ID, so we retry later.
+            Logger.e("BatchEventWorker", "Failed to get advertising ID. Retrying later.")
             return Result.retry()
         }
+
         val username = userDao.getUsername()?.username
         val apiKey = sharedPreferences.getString("api_key", null)
+        val bundleId = sharedPreferences.getString("bundle_id", null)
 
-        if (apiKey == null) {
-            // API key is not set, we can't send events.
+        if (apiKey == null || bundleId == null) {
+            Logger.e("BatchEventWorker", "API key or bundle ID is not set. Aborting.")
             return Result.failure()
         }
 
         for (event in events) {
             val params = mutableMapOf(
-                "bundle_id" to "com.tenjin.testapp",
+                "bundle_id" to bundleId,
                 "api_key" to apiKey,
                 "platform" to "android",
                 "event" to event.eventName,
@@ -52,15 +57,19 @@ class EventWorker(
             try {
                 val response = tenjinApi.sendEvent(params)
                 if (response.isSuccessful) {
+                    Logger.d("BatchEventWorker", "Event '${event.eventName}' sent successfully. Deleting from queue.")
                     eventDao.deleteEvent(event.id)
                 } else {
-                    return Result.retry()
+                    Logger.e("BatchEventWorker", "Failed to send event '${event.eventName}'. Server responded with ${response.code()}. Retrying later.")
+                    return Result.retry() // Retry the whole work if one event fails
                 }
             } catch (e: Exception) {
-                return Result.retry()
+                Logger.e("BatchEventWorker", "Failed to send event '${event.eventName}'. ${e.message}. Retrying later.", e)
+                return Result.retry() // Retry the whole work if one event fails
             }
         }
 
+        Logger.d("BatchEventWorker", "All events processed in this batch.")
         return Result.success()
     }
 
@@ -69,6 +78,7 @@ class EventWorker(
             val adInfo = AdvertisingIdClient.getAdvertisingIdInfo(applicationContext)
             adInfo.id
         } catch (e: Exception) {
+            Logger.e("BatchEventWorker", "Failed to get advertising ID.", e)
             null
         }
     }

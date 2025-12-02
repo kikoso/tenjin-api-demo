@@ -16,6 +16,12 @@ interface EventDao {
     @Query("SELECT * FROM events ORDER BY timestamp ASC")
     suspend fun getEvents(): List<Event>
 
+    @Query("SELECT COUNT(*) FROM events")
+    suspend fun getEventsCount(): Int
+
+    @Query("DELETE FROM events WHERE id IN (:eventIds)")
+    suspend fun deleteEvents(eventIds: List<Long>)
+
     @Query("DELETE FROM events WHERE id = :eventId")
     suspend fun deleteEvent(eventId: Long)
 }

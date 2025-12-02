@@ -5,18 +5,22 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import com.tenjin.sdk.Logger
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,10 +57,12 @@ class MainActivity : ComponentActivity() {
 fun TenjinTestApp(modifier: Modifier = Modifier) {
     var username by remember { mutableStateOf<String?>(null) }
     var newUsername by remember { mutableStateOf("") }
-    val events by TenjinSDK.getEvents().collectAsState(initial = emptyList())
+    var isLoggingEnabled by remember { mutableStateOf(true) }
+
+    val sdk = MainApplication.sdk
 
     LaunchedEffect(Unit) {
-        username = TenjinSDK.getUsername()
+        username = sdk.getUsername()
     }
 
     Column(
@@ -66,11 +72,23 @@ fun TenjinTestApp(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Enable Logging")
+            Spacer(modifier = Modifier.width(8.dp))
+            Switch(
+                checked = isLoggingEnabled,
+                onCheckedChange = {
+                    isLoggingEnabled = it
+                    Logger.isEnabled = it
+                }
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
         if (username != null) {
             Text("Current Username: $username")
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                TenjinSDK.removeUsername()
+                sdk.removeUsername()
                 username = null
             }) {
                 Text("Remove Username")
@@ -84,7 +102,7 @@ fun TenjinTestApp(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
                 if (newUsername.isNotEmpty()) {
-                    TenjinSDK.setUsername(newUsername)
+                    sdk.setUsername(newUsername)
                     username = newUsername
                 }
             }) {
@@ -92,17 +110,19 @@ fun TenjinTestApp(modifier: Modifier = Modifier) {
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { TenjinSDK.sendEvent("event_a_clicked") }) {
+        Button(onClick = { sdk.sendEvent("event_a_clicked") }) {
             Text("Send Event A")
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { TenjinSDK.sendEvent("event_b_clicked") }) {
+        Button(onClick = { sdk.sendEvent("event_b_clicked") }) {
             Text("Send Event B")
         }
         Spacer(modifier = Modifier.height(16.dp))
+        val events by sdk.getEvents()?.collectAsState(initial = emptyList()) ?: remember { mutableStateOf(emptyList()) }
+
         LazyColumn {
-            items( events) { event ->
-                Text("Sending event ${event.eventName}...")
+            items(events) { event ->
+                Text("Event: ${event.eventName}")
             }
         }
     }
