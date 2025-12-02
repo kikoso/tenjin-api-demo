@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.atomic.AtomicBoolean
 
-class TenjinSDK private constructor(
+class TenjinSDK internal constructor(
     private val appContext: Context,
     private val config: TenjinSDKConfig,
     private val eventDao: EventDao,

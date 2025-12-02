@@ -8,12 +8,13 @@ import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class BatchEventWorker(
+open class BatchEventWorker(
     appContext: Context,
     workerParams: WorkerParameters,
     private val eventDao: EventDao,
     private val userDao: UserDao,
-    private val tenjinApi: TenjinApi
+    private val tenjinApi: TenjinApi,
+    private val advertisingIdProvider: AdvertisingIdProvider
 ) : CoroutineWorker(appContext, workerParams) {
     private val sharedPreferences: SharedPreferences = applicationContext.getSharedPreferences(
         "tenjin_sdk_prefs",
@@ -29,7 +30,7 @@ class BatchEventWorker(
 
         Logger.d("BatchEventWorker", "Attempting to send ${events.size} events individually.")
 
-        val advertisingId = getAdvertisingId()
+        val advertisingId = advertisingIdProvider.getAdvertisingId()
         if (advertisingId == null) {
             Logger.e("BatchEventWorker", "Failed to get advertising ID. Retrying later.")
             return Result.retry()
@@ -71,15 +72,5 @@ class BatchEventWorker(
 
         Logger.d("BatchEventWorker", "All events processed in this batch.")
         return Result.success()
-    }
-
-    private suspend fun getAdvertisingId(): String? = withContext(Dispatchers.IO) {
-        try {
-            val adInfo = AdvertisingIdClient.getAdvertisingIdInfo(applicationContext)
-            adInfo.id
-        } catch (e: Exception) {
-            Logger.e("BatchEventWorker", "Failed to get advertising ID.", e)
-            null
-        }
     }
 }

@@ -17,7 +17,7 @@ class TenjinWorkerFactory(
     ): ListenableWorker? {
         return when (workerClassName) {
             BatchEventWorker::class.java.name -> {
-                BatchEventWorker(appContext, workerParameters, eventDao, userDao, tenjinApi)
+                BatchEventWorker(appContext, workerParameters, eventDao, userDao, tenjinApi, DefaultAdvertisingIdProvider(appContext))
             }
             else -> null
         }

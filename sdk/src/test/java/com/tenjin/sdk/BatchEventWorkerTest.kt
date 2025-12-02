@@ -18,6 +18,7 @@ import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
+import org.mockito.kotlin.spy
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import retrofit2.Response
@@ -37,12 +38,18 @@ class BatchEventWorkerTest {
     @Mock
     private lateinit var tenjinApi: TenjinApi
 
+    @Mock
+    private lateinit var advertisingIdProvider: AdvertisingIdProvider
+
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
         context = ApplicationProvider.getApplicationContext()
         val sharedPreferences = context.getSharedPreferences("tenjin_sdk_prefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString("api_key", "123").commit()
+        sharedPreferences.edit()
+            .putString("api_key", "123")
+            .putString("bundle_id", "com.tenjin.sdk.test")
+            .commit()
     }
 
     @Test
@@ -57,7 +64,9 @@ class BatchEventWorkerTest {
     fun `doWork returns success when events are sent`() = runBlocking {
         val events = listOf(Event(id = 1, eventName = "test_event"))
         whenever(eventDao.getEvents()).thenReturn(events)
-        whenever(tenjinApi.sendEvents(any())).thenReturn(Response.success(Unit))
+        whenever(advertisingIdProvider.getAdvertisingId()).thenReturn("test_aid")
+        whenever(tenjinApi.sendEvent(any())).thenReturn(Response.success(Unit))
+        whenever(eventDao.deleteEvent(any())).thenReturn(Unit)
         val worker = createWorker()
         val result = worker.doWork()
         assertEquals(ListenableWorker.Result.success(), result)
@@ -67,7 +76,8 @@ class BatchEventWorkerTest {
     fun `doWork returns retry when api fails`() = runBlocking {
         val events = listOf(Event(id = 1, eventName = "test_event"))
         whenever(eventDao.getEvents()).thenReturn(events)
-        whenever(tenjinApi.sendEvents(any())).thenReturn(Response.error(500, "".toResponseBody("application/json".toMediaTypeOrNull())))
+        whenever(advertisingIdProvider.getAdvertisingId()).thenReturn("test_aid")
+        whenever(tenjinApi.sendEvent(any())).thenReturn(Response.error(500, "".toResponseBody("application/json".toMediaTypeOrNull())))
         val worker = createWorker()
         val result = worker.doWork()
         assertEquals(ListenableWorker.Result.retry(), result)
@@ -79,6 +89,7 @@ class BatchEventWorkerTest {
         sharedPreferences.edit().clear().commit()
         val events = listOf(Event(id = 1, eventName = "test_event"))
         whenever(eventDao.getEvents()).thenReturn(events)
+        whenever(advertisingIdProvider.getAdvertisingId()).thenReturn("test_aid")
         val worker = createWorker()
         val result = worker.doWork()
         assertEquals(ListenableWorker.Result.failure(), result)
@@ -91,7 +102,7 @@ class BatchEventWorkerTest {
                 workerClassName: String,
                 workerParameters: WorkerParameters
             ): ListenableWorker {
-                return BatchEventWorker(appContext, workerParameters, eventDao, userDao, tenjinApi)
+                return BatchEventWorker(appContext, workerParameters, eventDao, userDao, tenjinApi, advertisingIdProvider)
             }
         }
         return TestListenableWorkerBuilder<BatchEventWorker>(context)
