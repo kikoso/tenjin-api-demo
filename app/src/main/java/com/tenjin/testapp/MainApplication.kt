@@ -2,13 +2,11 @@ package com.tenjin.testapp
 
 import android.app.Application
 import androidx.work.Configuration
-import androidx.work.WorkManager
 import com.tenjin.sdk.AppDatabase
 import com.tenjin.sdk.RetrofitClient
 import com.tenjin.sdk.TenjinSDK
 import com.tenjin.sdk.TenjinSDKConfig
 import com.tenjin.sdk.TenjinWorkerFactory
-import com.tenjin.testapp.BuildConfig
 
 class MainApplication : Application(), Configuration.Provider {
 

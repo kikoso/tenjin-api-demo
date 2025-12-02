@@ -4,9 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.google.android.gms.ads.identifier.AdvertisingIdClient
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 open class BatchEventWorker(
     appContext: Context,
